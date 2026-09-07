@@ -26,7 +26,7 @@ class SceneSample:
 
   @property
   def target_idx(self) -> Tensor: 
-    return torch.where(-self.cond_mask)[0]
+    return torch.where(~self.cond_mask)[0]
 
   def to(self, device: torch.device | str) -> "SceneSample": 
     return replace(
