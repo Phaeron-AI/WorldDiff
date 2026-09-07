@@ -1,2 +1,6 @@
 # Virtual Environment
 .venv/
+
+# Pycache Runs
+__pycache__/
+.pytest_cache/
