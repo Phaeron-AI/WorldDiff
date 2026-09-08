@@ -21,9 +21,9 @@ class VAEAdapter(nn.Module):
 
     self.vae = vae
 
-    self._scaling = float(vae.config.scaling_factor)
-    self._latent_channels = int(vae.config.latent_channels) 
-    self._downsample = 2 ** (len(vae.config.block_out_channels) - 1)
+    self._scaling = float(vae.config.scaling_factor)  # type: ignore[union-attr]
+    self._latent_channels = int(vae.config.latent_channels) # type: ignore[union-attr]
+    self._downsample = 2 ** (len(vae.config.block_out_channels) - 1)  # type: ignore[union-attr]
 
   @property
   def downsample(self) -> int:
