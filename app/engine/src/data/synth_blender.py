@@ -9,7 +9,7 @@ from torch import Tensor
 import torch.nn.functional as F
 
 # Local Import(s)
-from sample import SceneSample
+from src.data.sample import SceneSample
 
 
 # ----------------------------------------------------------------------
