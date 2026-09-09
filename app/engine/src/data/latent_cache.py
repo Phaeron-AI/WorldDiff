@@ -39,6 +39,7 @@ def build_latent_cache(
   from src.model.camera import rescale_intrinsics
 
   cache_dir = Path(cache_dir)
+  cache_dir.mkdir(parents=True, exist_ok=True)
   dt = getattr(torch, cfg.latent_dtype)
 
   for i in range(cfg.num_scenes):
