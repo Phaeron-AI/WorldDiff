@@ -9,6 +9,13 @@ def apply_conditioning(
   z0: Tensor,
   cond_mask: Tensor
 ) -> Tensor:
-  mask = cond_mask[:, :, None, None]
+  """
+    This is where we add conditioning mask: 
+      - mv = 0 (for i/p views)
+      - mv = 1 (for target views)
+    
+    mv = [B, V]
+  """
+  mask = cond_mask[:, :, None, None]  # [B, V]
 
   return torch.where(mask, z0, zt)
