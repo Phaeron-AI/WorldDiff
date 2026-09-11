@@ -29,7 +29,9 @@ def apply_conditioning(
   if cond_mask.ndim != 2:
     raise ValueError(f"Expected: [B, V]; Got: {tuple(cond_mask.shape)}")
 
-  if cond_mask.shape[0] != z0.shape[0] or cond_mask.shape[1] != z0.shape[1]:
+  B, V = zt.shape[:2]
+  
+  if cond_mask.shape != (B, V):
     raise ValueError(f"Expected Shape: [B, V]; Got: {tuple(cond_mask.shape)}")
   
   mask = cond_mask[:, :, None, None, None]  # [B, V]
