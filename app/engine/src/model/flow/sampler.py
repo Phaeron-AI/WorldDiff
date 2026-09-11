@@ -8,6 +8,10 @@ def euler_step(
   velocity: Tensor,
   dt: float
 ) -> Tensor:
+  """
+    Euler Step Method:
+      zt-del_t = zt - del_t * v(zt, t)
+  """
   
   if z.ndim != 5:
     raise ValueError(f"Expected: [B, V, C, h, w]; Got: {tuple(z.shape)}")
