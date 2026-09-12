@@ -1,28 +1,35 @@
 from __future__ import annotations
 
 # Third Party Import(s)
+
 import torch
+
 from torch import Tensor
 
 # Local Import(s)
+
 from src.model.flow.interpolant import sample_noise
+from src.model.flow.scheduler import RectifiedFlowScheduler
+
 
 def euler_step(
   z: Tensor,
   velocity: Tensor,
-  dt: float
+  dt: Tensor | float
 ) -> Tensor:
   """
-    Euler Step Method:
-      zt-del_t = zt - del_t * v(zt, t)
-  """
+  Euler Step Method:
 
+    zt-del_t = zt - del_t * v(zt, t)
+  """
   if z.ndim != 5:
-    raise ValueError(f"Expected: [B, V, C, h, w]; Got: {tuple(z.shape)}")
+    raise ValueError(
+      f"Expected: [B, V, C, h, w]; Got: {tuple(z.shape)}"
+    )
 
   if z.shape != velocity.shape:
     raise ValueError(
-      f"Velocity shape must match z shape."
+      f"Velocity shape must match z shape. "
       f"Got z={tuple(z.shape)}, "
       f"velocity={tuple(velocity.shape)}"
     )
@@ -34,7 +41,13 @@ def euler_step(
 
   return z - dt * velocity
 
-def init_target_noise(z0: Tensor, cond_mask: Tensor, *, rng: torch.Generator | None = None) -> Tensor:
+
+def init_target_noise(
+  z0: Tensor,
+  cond_mask: Tensor,
+  *,
+  rng: torch.Generator | None = None
+) -> Tensor:
   if z0.ndim != 5:
     raise ValueError(
       f"z0 must have shape [B,V,C,h,w], "
@@ -57,33 +70,54 @@ def init_target_noise(z0: Tensor, cond_mask: Tensor, *, rng: torch.Generator | N
 
   return torch.where(mask, z0, z)
 
+
 def sample(
-  model, 
-  z0: Tensor, 
-  cond_mask: Tensor, 
-  *, 
-  num_steps: int = 20, 
+  model,
+  z0: Tensor,
+  cond_mask: Tensor,
+  *,
+  num_steps: int = 20,
   rng: torch.Generator | None = None
 ) -> Tensor:
   if num_steps <= 0:
-    raise ValueError(f"num_steps must be positive, Got: {num_steps}")
-  
-  z = init_target_noise(z0, cond_mask, rng=rng)
-
-  dt = 1.0 / num_steps
-  mask = cond_mask.bool()[:, :, None, None, None]
-
-  for step in range(num_steps):
-    t_b = 1.0 - step * dt
-
-    t = torch.full(
-      (z.shape[0],),
-      t_b,
-      device=z.device,
-      dtype=z.dtype,
+    raise ValueError(
+      f"num_steps must be positive, Got: {num_steps}"
     )
 
-    velocity = model(z, t, cond_mask)
+  scheduler = RectifiedFlowScheduler(
+    num_steps,
+    device=z0.device,
+    dtype=z0.dtype,
+  )
+
+  # Initialize target views with Gaussian noise
+  # and keep conditioning views at their clean latent.
+  z = init_target_noise(
+    z0,
+    cond_mask,
+    rng=rng,
+  )
+
+  cond_mask = cond_mask.bool()
+
+  mask = cond_mask[:, :, None, None, None]
+
+  timesteps = scheduler.step_times()
+  step_sizes = scheduler.step_size()
+
+  for step in range(num_steps):
+    # Scheduler provides the model evaluation time.
+    # Expand the scalar timestep to one value per batch item.
+    t = timesteps[step].expand(z.shape[0])
+
+    # Scheduler provides the positive step magnitude.
+    dt = step_sizes[step]
+
+    velocity = model(
+      z,
+      t,
+      cond_mask=cond_mask,
+    )
 
     if velocity.shape != z.shape:
       raise RuntimeError(
@@ -92,8 +126,17 @@ def sample(
         f"{tuple(z.shape)}"
       )
 
-    z = euler_step(z, velocity, dt)
+    z = euler_step(
+      z,
+      velocity,
+      dt,
+    )
 
-    z = torch.where(mask, z0, z)
+    # Conditioning views remain exactly equal to z0.
+    z = torch.where(
+      mask,
+      z0,
+      z,
+    )
 
   return z
