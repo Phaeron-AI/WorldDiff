@@ -4,7 +4,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-def masked_flow_matching_mask(
+def masked_flow_matching_loss(
   v_pred: Tensor,
   target: Tensor,
   target_mask: Tensor
