@@ -6,17 +6,17 @@ from torch import Tensor
 
 class RectifiedFlowScheduler:
   def __init__(
-    self, 
-    num_steps: int, 
-    *, 
-    device: torch.device, 
+    self,
+    num_steps: int,
+    *,
+    device: torch.device,
     dtype: torch.dtype = torch.float32
   ) -> None:
     if num_steps <= 0:
       raise ValueError(
         f"num_steps must be positive, got {num_steps}"
       )
-    
+
     self.num_steps = num_steps
     self.device = device
     self.dtype = dtype
@@ -34,19 +34,18 @@ class RectifiedFlowScheduler:
 
   def step_times(self) -> Tensor:
     """
-      Return the model-evaluation times.
+    Return the model-evaluation times.
+    
+    For N steps:
+      [1, 1-dt, ..., dt]
 
-      For N steps:
-
-        [1, 1-dt, ..., dt]
-
-      These are the left endpoints of the reverse-time
-      Euler integration intervals.
+    These are the left endpoints of the reverse-time
+    Euler integration intervals.
     """
     return self.timesteps[:-1]
 
   def step_size(self) -> Tensor:
     """
-      Return the positive magnitude of each integration step
+    Return the positive magnitude of each integration step.
     """
-    return self.timesteps[:-1] - self.timesteps[1]
+    return self.timesteps[:-1] - self.timesteps[1:]

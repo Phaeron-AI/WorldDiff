@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 # Third Party Import(s)
-
 import torch
-
 from torch import Tensor
 
 # Local Import(s)
-
 from src.model.flow.interpolant import sample_noise
 from src.model.flow.scheduler import RectifiedFlowScheduler
 
@@ -34,10 +31,22 @@ def euler_step(
       f"velocity={tuple(velocity.shape)}"
     )
 
-  if dt <= 0.0:
+  if isinstance(dt, float) and dt <= 0.0:
     raise ValueError(
       f"dt must be positive, got {dt}"
     )
+
+  if isinstance(dt, Tensor):
+    if dt.numel() != 1:
+      raise ValueError(
+        f"dt must be a scalar tensor, "
+        f"got shape {tuple(dt.shape)}"
+      )
+
+    if dt.item() <= 0.0:
+      raise ValueError(
+        f"dt must be positive, got {dt.item()}"
+      )
 
   return z - dt * velocity
 
@@ -64,11 +73,18 @@ def init_target_noise(
 
   cond_mask = cond_mask.bool()
 
-  z = sample_noise(z0, rng=rng)
+  z = sample_noise(
+    z0,
+    rng=rng,
+  )
 
   mask = cond_mask[:, :, None, None, None]
 
-  return torch.where(mask, z0, z)
+  return torch.where(
+    mask,
+    z0,
+    z,
+  )
 
 
 def sample(
@@ -104,6 +120,18 @@ def sample(
 
   timesteps = scheduler.step_times()
   step_sizes = scheduler.step_size()
+
+  if timesteps.shape != (num_steps,):
+    raise RuntimeError(
+      f"Scheduler returned {timesteps.shape} evaluation times, "
+      f"expected {(num_steps,)}"
+    )
+
+  if step_sizes.shape != (num_steps,):
+    raise RuntimeError(
+      f"Scheduler returned {step_sizes.shape} step sizes, "
+      f"expected {(num_steps,)}"
+    )
 
   for step in range(num_steps):
     # Scheduler provides the model evaluation time.
