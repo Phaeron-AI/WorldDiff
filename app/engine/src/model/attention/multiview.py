@@ -26,12 +26,6 @@ class PerViewAttention(nn.Module):
 
     B, V, N, D = x.shape
 
-    if D != self.dim:
-      raise ValueError(
-        f"Expected embedding dimension {self.dim}, "
-        f"got {D}"
-      )
-
     x = x.reshape(B*V, N, D)
 
     x = self.mha(x)
@@ -56,12 +50,6 @@ class CrossViewAttention(nn.Module):
       )
 
     B, V, N, D = x.shape
-
-    if D != self.dim:
-      raise ValueError(
-        f"Expected embedding dimension {self.dim}, "
-        f"got {D}"
-      )
 
     x = x.reshape(B, V*N, D)
     x = self.mha(x)
