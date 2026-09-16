@@ -39,7 +39,7 @@ Damn, that was tiring, I'll cut down on using jargons cause it hurts my head and
 
 ---
 
-I'll add the plan-docs/roadmaps eventually! Stay Tuned...
+## Proposed Architecture
 
 ---
 

@@ -1,0 +1,11 @@
+# Math Directory (Temporarily ignored)
+math/
+
+# Image File(s)
+*.jpg
+*.jpeg
+*.svg
+*.png
+
+# Docs
+*.md
