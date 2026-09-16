@@ -5,8 +5,8 @@ import torch
 from torch import Tensor
 
 # Local Import(s)
-from src.model.flow.interpolant import sample_noise
-from src.model.flow.scheduler import RectifiedFlowScheduler
+from src.models.flow.interpolant import sample_noise
+from src.models.flow.scheduler import RectifiedFlowScheduler
 
 
 def euler_step(

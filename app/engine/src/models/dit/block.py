@@ -4,7 +4,7 @@ from __future__ import annotations
 from torch import nn, Tensor
 
 # Local Import(s)
-from src.model.attention.multiview import (
+from src.models.attention.multiview import (
   PerViewAttention, CrossViewAttention
 )
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 from torch import nn, Tensor
 
 # Local Import(s)
-from src.model.attention.core import MultiHeadAttention
+from src.models.attention.core import MultiHeadAttention
 
 
 class PerViewAttention(nn.Module):
