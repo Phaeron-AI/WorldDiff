@@ -23,9 +23,9 @@ class TimeStepEmbedding(nn.Module):
 
   def timestep_embedding(self, t: Tensor, dim: int, max_period: int = 10_000) -> Tensor:
     half = dim // 2
-    frequencies = torch.exp(-math.log(max_period) * torch.arange(half, device=t.device, dtype=torch.float32) / half)
+    frequencies = torch.exp(-math.log(max_period) * torch.arange(half, device=t.device, dtype=t.dtype) / half)
 
-    args = t.float()[:, None] * frequencies[None, :]
+    args = t[:, None] * frequencies[None, :]
 
     embedding = torch.cat([torch.sin(args), torch.cos(args)], dim=-1)
     if dim % 2:
@@ -122,7 +122,7 @@ class PatchEmbedding(nn.Module):
     return tokens
 
 
-def get_2d_sincos_pos_embedding(embed_dim: int, grid_h: int, grid_w: int, patch_size: int, emb_const: float = 10_000.0):
+def get_2d_sincos_pos_embedding(embed_dim: int, grid_h: int, grid_w: int, emb_const: float = 10_000.0):
   half = embed_dim // 2
   
   assert embed_dim % 4 == 0, "Embed dimension must be divisible by 4 for 2D sin-cos."
