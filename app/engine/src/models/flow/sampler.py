@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # Third Party Import(s)
 import torch
+
 from torch import Tensor
 
 # Local Import(s)
@@ -12,12 +13,12 @@ from src.models.flow.scheduler import RectifiedFlowScheduler
 def euler_step(
   z: Tensor,
   velocity: Tensor,
-  dt: Tensor | float
+  dt: Tensor | float,
 ) -> Tensor:
   """
   Euler Step Method:
 
-    zt-del_t = zt - del_t * v(zt, t)
+    z_{t-dt} = z_t - dt * v(z_t, t)
   """
   if z.ndim != 5:
     raise ValueError(
@@ -55,7 +56,7 @@ def init_target_noise(
   z0: Tensor,
   cond_mask: Tensor,
   *,
-  rng: torch.Generator | None = None
+  rng: torch.Generator | None = None,
 ) -> Tensor:
   if z0.ndim != 5:
     raise ValueError(
@@ -90,15 +91,38 @@ def init_target_noise(
 def sample(
   model,
   z0: Tensor,
+  rays: Tensor,
   cond_mask: Tensor,
   *,
   num_steps: int = 20,
-  rng: torch.Generator | None = None
+  rng: torch.Generator | None = None,
 ) -> Tensor:
   if num_steps <= 0:
     raise ValueError(
       f"num_steps must be positive, Got: {num_steps}"
     )
+
+  if z0.ndim != 5:
+    raise ValueError(
+      f"z0 must have shape [B,V,C,h,w], "
+      f"got {tuple(z0.shape)}"
+    )
+
+  B, V, C, H, W = z0.shape
+
+  if rays.shape != (B, V, 6, H, W):
+    raise ValueError(
+      f"rays must have shape {(B, V, 6, H, W)}, "
+      f"got {tuple(rays.shape)}"
+    )
+
+  if cond_mask.shape != (B, V):
+    raise ValueError(
+      f"cond_mask must have shape {(B, V)}, "
+      f"got {tuple(cond_mask.shape)}"
+    )
+
+  cond_mask = cond_mask.bool()
 
   scheduler = RectifiedFlowScheduler(
     num_steps,
@@ -107,14 +131,12 @@ def sample(
   )
 
   # Initialize target views with Gaussian noise
-  # and keep conditioning views at their clean latent.
+  # and conditioning views at their clean latent.
   z = init_target_noise(
     z0,
     cond_mask,
     rng=rng,
   )
-
-  cond_mask = cond_mask.bool()
 
   mask = cond_mask[:, :, None, None, None]
 
@@ -136,13 +158,14 @@ def sample(
   for step in range(num_steps):
     # Scheduler provides the model evaluation time.
     # Expand the scalar timestep to one value per batch item.
-    t = timesteps[step].expand(z.shape[0])
+    t = timesteps[step].expand(B)
 
     # Scheduler provides the positive step magnitude.
     dt = step_sizes[step]
 
     velocity = model(
       z,
+      rays,
       t,
       cond_mask=cond_mask,
     )
