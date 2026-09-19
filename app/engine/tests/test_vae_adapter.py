@@ -5,7 +5,7 @@ import math
 import pytest
 import torch
 
-from src.model.vae_adapter import VAEAdapter
+from src.models.vae_adapter import VAEAdapter
 
 
 # A frozen VAE is expensive to load; build it once for the whole module.

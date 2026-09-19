@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import torch
 
-from src.model.camera import rescale_intrinsics
+from src.models.camera import rescale_intrinsics
 from src.data.rays import RayEncoder
 
 
