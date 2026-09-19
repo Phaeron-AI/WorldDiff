@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-# Third Party Import(s)
 import torch
+
 from torch import Tensor
 
-# Local Import(s)
 from src.models.dit.model import MultiViewDiT
+
 from src.models.flow import (
   linear_interpolant,
   apply_conditioning,
@@ -20,7 +20,7 @@ def train_overfit(
   cond_mask: Tensor,
   num_steps: int = 5000,
   lr: float = 1e-4,
-) -> None:
+) -> list[float]:
   model.train()
 
   # ------------------------------------------------------------
@@ -35,6 +35,7 @@ def train_overfit(
 
   assert B == 1, "P2 overfit gate expects B=1"
   assert V == 2, "P2 overfit gate expects exactly 2 views"
+
   assert rays.shape == (B, V, 6, H, W)
   assert cond_mask.shape == (B, V)
 
@@ -53,6 +54,10 @@ def train_overfit(
     model.parameters(),
     lr=lr,
   )
+
+  # Record every training loss so the driver can inspect
+  # the initial and final values.
+  losses: list[float] = []
 
   for step in range(num_steps):
     optimizer.zero_grad(set_to_none=True)
@@ -130,8 +135,16 @@ def train_overfit(
     loss.backward()
     optimizer.step()
 
+    loss_value = loss.item()
+    losses.append(loss_value)
+
     if step % 100 == 0:
       print(
         f"step={step:05d} "
-        f"loss={loss.item():.6e}"
+        f"loss={loss_value:.6e}"
       )
+
+  # ------------------------------------------------------------
+  # 7. Return the recorded losses to the driver
+  # ------------------------------------------------------------
+  return losses
