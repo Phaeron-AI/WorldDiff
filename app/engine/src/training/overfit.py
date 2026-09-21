@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import torch
-
 from torch import Tensor
 
 from src.models.dit.model import MultiViewDiT
-
-from src.models.flow import (
-  linear_interpolant,
-  apply_conditioning,
-  masked_flow_matching_loss,
-)
+from src.training.ema import EMA
+from src.training.lr_schedule import learning_rate
+from src.training.step import train_step
 
 
 def train_overfit(
@@ -18,133 +14,74 @@ def train_overfit(
   z0: Tensor,
   rays: Tensor,
   cond_mask: Tensor,
+  *,
   num_steps: int = 5000,
   lr: float = 1e-4,
+  G_noise: torch.Generator | None = None,
+  G_role: torch.Generator | None = None,
+  ema: EMA | None = None,
+  use_lr_schedule: bool = False,
+  warmup_steps: int = 1000,
+  max_grad_norm: float | None = 1.0,
 ) -> list[float]:
-  model.train()
+  if num_steps < 1:
+    raise ValueError(
+      f"num_steps must be >= 1, got {num_steps}"
+    )
 
-  # ------------------------------------------------------------
-  # Input invariants
-  # ------------------------------------------------------------
-  assert z0.ndim == 5, "z0 must have shape [B, V, C, H, W]"
-  assert rays.ndim == 5, "rays must have shape [B, V, 6, H, W]"
-  assert cond_mask.ndim == 2, "cond_mask must have shape [B, V]"
-  assert cond_mask.dtype == torch.bool, "cond_mask must be bool"
+  if G_noise is None:
+    G_noise = torch.Generator(
+      device=z0.device
+    )
 
-  B, V, C, H, W = z0.shape
-
-  assert B == 1, "P2 overfit gate expects B=1"
-  assert V == 2, "P2 overfit gate expects exactly 2 views"
-
-  assert rays.shape == (B, V, 6, H, W)
-  assert cond_mask.shape == (B, V)
-
-  # Exactly one conditioning view and one target view.
-  assert cond_mask.sum().item() == 1, (
-    "cond_mask must contain exactly one conditioning view"
-  )
-
-  target_mask = ~cond_mask
-
-  assert target_mask.sum().item() == 1, (
-    "target_mask must contain exactly one target view"
-  )
+  if G_role is None:
+    G_role = torch.Generator(
+      device="cpu"
+    )
 
   optimizer = torch.optim.Adam(
     model.parameters(),
     lr=lr,
   )
 
-  # Record every training loss so the driver can inspect
-  # the initial and final values.
   losses: list[float] = []
 
+  successful_steps = 0
+
   for step in range(num_steps):
-    optimizer.zero_grad(set_to_none=True)
+    if use_lr_schedule:
+      current_lr = learning_rate(
+        step=successful_steps,
+        max_lr=lr,
+        warmup_steps=warmup_steps,
+        total_steps=num_steps,
+      )
+    else:
+      current_lr = lr
 
-    # ------------------------------------------------------------
-    # 1. Sample rectified-flow endpoint and time
-    # ------------------------------------------------------------
-    epsilon = torch.randn_like(z0)
-
-    t = torch.rand(
-      B,
-      device=z0.device,
-      dtype=z0.dtype,
-    )
-
-    # ------------------------------------------------------------
-    # 2. Construct point on the flow trajectory
-    #
-    # z_t = (1 - t) * z0 + t * epsilon
-    # ------------------------------------------------------------
-    z_t = linear_interpolant(
+    result = train_step(
+      model=model,
+      optimizer=optimizer,
       z0=z0,
-      eps=epsilon,
-      t=t,
-    )
-
-    # ------------------------------------------------------------
-    # 3. Pin the conditioning view to the clean latent
-    #
-    # cond view:
-    #   z_t = z0
-    #
-    # target view:
-    #   z_t = (1 - t) * z0 + t * epsilon
-    # ------------------------------------------------------------
-    z_t = apply_conditioning(
-      zt=z_t,
-      z0=z0,
-      cond_mask=cond_mask,
-    )
-
-    # ------------------------------------------------------------
-    # 4. Predict velocity
-    # ------------------------------------------------------------
-    velocity = model(
-      x=z_t,
       rays=rays,
-      t=t,
+      G_noise=G_noise,
+      G_role=G_role,
       cond_mask=cond_mask,
+      ema=ema,
+      max_grad_norm=max_grad_norm,
+      learning_rate=current_lr,
     )
 
-    # ------------------------------------------------------------
-    # 5. Rectified-flow velocity target
-    #
-    # z_t = (1 - t) * z0 + t * epsilon
-    #
-    # Therefore:
-    #
-    #   dz_t / dt = epsilon - z0
-    #
-    # The conditioning view is NOT scored.
-    # Only the target view contributes to the loss.
-    # ------------------------------------------------------------
-    target = epsilon - z0
+    if result.skipped:
+      continue
 
-    loss = masked_flow_matching_loss(
-      v_pred=velocity,
-      target=target,
-      target_mask=target_mask,
-    )
-
-    # ------------------------------------------------------------
-    # 6. Optimize
-    # ------------------------------------------------------------
-    loss.backward()
-    optimizer.step()
-
-    loss_value = loss.item()
-    losses.append(loss_value)
+    losses.append(result.loss)
+    successful_steps += 1
 
     if step % 100 == 0:
       print(
         f"step={step:05d} "
-        f"loss={loss_value:.6e}"
+        f"loss={result.loss:.6e}"
       )
 
-  # ------------------------------------------------------------
-  # 7. Return the recorded losses to the driver
-  # ------------------------------------------------------------
   return losses
