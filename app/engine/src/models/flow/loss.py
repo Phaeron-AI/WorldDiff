@@ -54,16 +54,13 @@ def masked_flow_matching_loss(
   
   mean_squared_error = (v_pred - target) ** 2
 
-  mask = target_mask[:, :, None, None, None]
+  per_view_mse = mean_squared_error.mean(dim=(2, 3, 4))
 
-  error = mean_squared_error * mask
+  masked_mse = per_view_mse * target_mask
 
-  denom = mask.sum() * C * h * w
+  per_sample_target_mean = (
+    masked_mse.sum(dim=1)
+    / target_views_per_sample.to(dtype=masked_mse.dtype)
+  )
 
-  if denom.item() == 0:
-    raise RuntimeError(
-      "Flow-matching loss denominator is zero. "
-      "No target views were provided."
-    )
-
-  return error.sum() / denom
+  return per_sample_target_mean.mean()
