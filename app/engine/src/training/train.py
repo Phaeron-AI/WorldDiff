@@ -2,9 +2,11 @@ from __future__ import annotations
 
 # Native Import(s)
 from dataclasses import dataclass
+from typing import Any, Protocol, Mapping
 
 # Third Party Import(s)
 import torch
+from torch import nn
 
 PRECISIONS = ("fp32", "fp16", "bf16")
 
@@ -97,3 +99,18 @@ class TrainingDiverged(RuntimeError):
 
 class ResumeMismatch(RuntimeError):
   """Raised when a checkpoint does not belong to the current experiment."""
+
+class EvalHook(Protocol):
+  def __call__(
+    self, 
+    model: nn.Module, 
+    *, 
+    step: int, 
+    generator: torch.Generator
+  ) -> Mapping[str, float] | None: ...
+
+class LogHook(Protocol):
+  def __call__(self, record: Mapping[str, Any]) -> None: ...
+
+class CheckpointHook(Protocol):
+  def __call__(self, state: Mapping[str, Any], *, tag: str) -> None: ...
