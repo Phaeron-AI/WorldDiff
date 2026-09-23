@@ -11,6 +11,7 @@ from torch import nn, Tensor
 
 # Local Import(s)
 from src.training.ema import EMA
+from src.training.epoch_cursor import EpochCursor
 from src.training.view_roles import sample_view_roles
 from src.training.lr_schedule import learning_rate
 from src.training.step import TrainStepResult, train_step
