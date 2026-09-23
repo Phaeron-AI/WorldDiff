@@ -177,4 +177,33 @@ class PerKAccumulator:
   def load_state_dict(self, state: Mapping[str, Any]) -> None:
     self.sums = {int(k): float(v) for k, v in state["sums"].items()}
     self.counts = {int(k): int(v) for k, v in state["counts"].items()}
-    
+
+class Generators:
+  def __init__(self, cfg: TrainingConfig, device: torch.device) -> None:
+    self.role = torch.Generator(device="cpu").manual_seed(cfg.role_seed)
+    self.noise = torch.Generator(device=device).manual_seed(cfg.noise_seed)
+ 
+  def state_dict(self) -> dict:
+    return {"role": self.role.get_state(), "noise": self.noise.get_state()}
+ 
+  def load_state_dict(self, state: Mapping[str, Any]) -> None:
+    self.role.set_state(state["role"].cpu() if state["role"].is_cuda else state["role"])
+    self.noise.set_state(state["noise"])
+
+  def snapshot(self) -> dict:
+    """Full RNG snapshot for the evaluation transaction (derivation 65)."""
+    snap = {
+      "role": self.role.get_state(),
+      "noise": self.noise.get_state(),
+      "torch_cpu": torch.get_rng_state(),
+    }
+    if torch.cuda.is_available():
+      snap["torch_cuda"] = torch.cuda.get_rng_state_all() # type: ignore
+    return snap
+ 
+  def restore(self, snap: Mapping[str, Any]) -> None:
+    self.role.set_state(snap["role"])
+    self.noise.set_state(snap["noise"])
+    torch.set_rng_state(snap["torch_cpu"])
+    if "torch_cuda" in snap and torch.cuda.is_available():
+      torch.cuda.set_rng_state_all(snap["torch_cuda"])
