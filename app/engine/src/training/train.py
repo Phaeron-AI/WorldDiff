@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 # Native Import(s)
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol, Mapping
 
 # Third Party Import(s)
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 PRECISIONS = ("fp32", "fp16", "bf16")
 
@@ -147,3 +147,34 @@ def numerical_flags() -> dict[str, Any]:
 
   return flags
 
+@dataclass
+class PerKAccumulator:
+  sums: dict[int, float] = field(default_factory=dict)
+  counts: dict[int, int] = field(default_factory=dict)
+
+  def add(self, per_k_loss: Mapping[int, float], cond_mask: Tensor) -> None:
+    k_per_sample = cond_mask.sum(dim=1).tolist()
+    for k, mean in per_k_loss.items():
+      n = sum(1 for kk in k_per_sample if int(kk) == int(k))
+      if n == 0:
+        continue
+      self.sums[k] = self.sums.get(k, 0.0) + float(mean) * n
+      self.counts[k] = self.counts.get(k, 0) + n
+
+  def means(self) -> dict[int, float]:
+    return {
+      k: self.sums[k] / self.counts[k] for k in sorted(self.sums) 
+      if self.counts[k]
+    }
+
+  def reset(self) -> None:
+    self.sums.clear()
+    self.counts.clear()
+
+  def state_dict(self) -> dict:
+    return {"sums": dict(self.sums), "counts": dict(self.counts)}
+
+  def load_state_dict(self, state: Mapping[str, Any]) -> None:
+    self.sums = {int(k): float(v) for k, v in state["sums"].items()}
+    self.counts = {int(k): int(v) for k, v in state["counts"].items()}
+    
