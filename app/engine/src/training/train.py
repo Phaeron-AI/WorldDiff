@@ -90,4 +90,10 @@ class TrainingConfig:
           "fp16 max_consecutive_skips must exceed ceil(log2(init_scale)) = "
           f"{floor} (derivation 50), got {self.resolved_max_consecutive_skips()}"
         )
-  
+
+
+class TrainingDiverged(RuntimeError):
+  """Raised when consecutive skipped steps exceed the configured threshold."""
+
+class ResumeMismatch(RuntimeError):
+  """Raised when a checkpoint does not belong to the current experiment."""
