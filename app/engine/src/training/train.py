@@ -114,3 +114,21 @@ class LogHook(Protocol):
 
 class CheckpointHook(Protocol):
   def __call__(self, state: Mapping[str, Any], *, tag: str) -> None: ...
+
+
+@dataclass
+class Hooks:
+  on_log: LogHook | None = None
+  on_eval: EvalHook | None = None
+  on_checkpoint: CheckpointHook | None = None
+
+@dataclass
+class TrainSummary:
+  optimizer_steps: int
+  attempted_steps: int
+  samples_seen: int
+  skipped_steps: int
+  epochs_completed: int
+  final_loss: float
+  wall_time_s: float
+  aborted: bool = False
