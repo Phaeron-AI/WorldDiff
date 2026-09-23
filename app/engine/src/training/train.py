@@ -132,3 +132,18 @@ class TrainSummary:
   final_loss: float
   wall_time_s: float
   aborted: bool = False
+
+
+def numerical_flags() -> dict[str, Any]:
+  flags: dict[str, Any] = {
+    "torch_version": torch.__version__,
+    "cuda_version": torch.version.cuda,
+    "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
+    "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
+    "cudnn_allow_tf32": bool(torch.backends.cudnn.allow_tf32),
+    "matmul_allow_tf32": bool(torch.backends.cuda.matmul.allow_tf32),
+    "device_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
+  }
+
+  return flags
+
