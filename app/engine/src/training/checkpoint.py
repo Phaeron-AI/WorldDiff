@@ -384,6 +384,7 @@ class CheckpointManager:
       path.name
     ) is not None
 
+
   def _load_checkpoint(
     self,
     path: Path,
@@ -396,7 +397,7 @@ class CheckpointManager:
       state = torch.load(
         path,
         map_location=map_location,
-        weights_only=True
+        weights_only=True,
       )
 
     except Exception as exc:
