@@ -10,7 +10,7 @@ from src.data.synth_blender import (
   sample_cameras,
   synth_scene,
 )
-from src.data.rays import RayEncoder
+from app.engine.src.geometry.rays import RayEncoder
 
 
 H = W = 64

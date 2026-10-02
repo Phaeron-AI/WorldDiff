@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from src.training.tracker import Tracker
+from app.engine.src.training.state.tracker import Tracker
 
 # The derivation-70 worked example: five steps, unequal example counts.
 #   sum 184 / count 160 = 1.15   (mean-of-means would be 1.4)

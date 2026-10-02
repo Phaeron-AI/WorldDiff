@@ -16,7 +16,7 @@ from torch import nn
 from src.models.flow.conditioning import apply_conditioning
 from src.models.flow.interpolant import linear_interpolant
 from src.models.flow.loss import masked_flow_matching_loss
-from src.training.ema import EMA
+from app.engine.src.training.policy.ema import EMA
 from src.training.step import train_step
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

@@ -4,7 +4,7 @@ import pytest
 import torch
 
 from src.models.camera import rescale_intrinsics
-from src.data.rays import RayEncoder
+from app.engine.src.geometry.rays import RayEncoder
 
 
 def _K(fx=30.0, fy=30.0, cx=32.0, cy=32.0) -> torch.Tensor:

@@ -19,8 +19,8 @@ from src.models.flow import (
   masked_flow_matching_loss,
 )
 from src.models.flow.sampler import sample
-from src.training.overfit import train_overfit
-from src.training.reconstruct import reconstruct
+from app.engine.scripts.overfit import train_overfit
+from app.engine.scripts.reconstruct import reconstruct
 
 
 # ----------------------------------------------------------------------

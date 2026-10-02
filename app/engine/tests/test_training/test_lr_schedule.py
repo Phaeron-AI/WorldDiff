@@ -1,6 +1,6 @@
 import pytest
 
-from src.training.lr_schedule import learning_rate
+from app.engine.src.training.policy.lr_schedule import learning_rate
 
 
 def test_lr_warmup_and_peak():

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.training.checkpoint import CheckpointError, CheckpointManager
+from app.engine.src.training.state.checkpoint import CheckpointError, CheckpointManager
 
 
 def make_state(step: int) -> dict:

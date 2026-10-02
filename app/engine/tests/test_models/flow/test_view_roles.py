@@ -7,7 +7,7 @@ from scipy.stats import chisquare
 
 # Local Import(s)
 from src.models.flow.loss import masked_flow_matching_loss
-from src.training.view_roles import sample_view_roles
+from app.engine.src.training.policy.view_roles import sample_view_roles
 
 def test_view_roles_k_distribution():
   B = 200_000
