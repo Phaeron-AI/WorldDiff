@@ -12,7 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 
 # Local Import(s)
 from src.data.latent_cache import CacheConfig
-from src.data.rays import RayEncoder
+from app.engine.src.geometry.rays import RayEncoder
 
 class SceneItem(TypedDict):
   latents: Tensor      # [V, C, h, w]
