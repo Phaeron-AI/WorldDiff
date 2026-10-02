@@ -10,10 +10,10 @@ import torch
 from torch import nn, Tensor
 
 # Local Import(s)
-from src.training.ema import EMA
-from src.training.epoch_cursor import EpochCursor
-from src.training.view_roles import sample_view_roles
-from src.training.lr_schedule import learning_rate
+from app.engine.src.training.policy.ema import EMA
+from app.engine.src.training.state.epoch_cursor import EpochCursor
+from app.engine.src.training.policy.view_roles import sample_view_roles
+from app.engine.src.training.policy.lr_schedule import learning_rate
 from src.training.step import TrainStepResult, train_step
 
 PRECISIONS = ("fp32", "fp16", "bf16")
