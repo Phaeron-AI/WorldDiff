@@ -36,7 +36,7 @@ def build_latent_cache(
   overwrite: bool = False
 ) -> Path:
   from src.data.synth_blender import synth_scene
-  from src.models.camera import rescale_intrinsics
+  from src.geometry.camera import rescale_intrinsics
 
   cache_dir = Path(cache_dir)
   cache_dir.mkdir(parents=True, exist_ok=True)

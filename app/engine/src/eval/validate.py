@@ -10,10 +10,10 @@ import torch
 from src.eval.metrics import pooled_mse, pooled_psnr
 from src.models.flow import sample
 from src.models.flow.conditioning import apply_conditioning
-from src.models.flow.guidance import cfg_velocity
-from src.models.flow.interpolant import sample_noise
-from src.models.flow.sampler import euler_step, init_target_noise
-from src.models.flow.scheduler import RectifiedFlowScheduler
+from src.models.flow.reverse.guidance import cfg_velocity
+from src.models.flow.forward.interpolant import sample_noise
+from src.models.flow.reverse.sampler import euler_step, init_target_noise
+from src.models.flow.reverse.scheduler import RectifiedFlowScheduler
 
 
 K_ROUTINE = 8

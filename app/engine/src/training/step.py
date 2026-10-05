@@ -5,14 +5,14 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor, nn
 
-from src.models.flow.interpolant import linear_interpolant
-from app.engine.src.training.policy.ema import EMA
-from src.models.flow.loss import (
+from src.models.flow.forward.interpolant import linear_interpolant
+from src.training.policy.ema import EMA
+from src.models.flow.forward.loss import (
   _masked_flow_matching_loss_per_sample,
   masked_flow_matching_loss,
 )
 from src.models.flow.conditioning import apply_conditioning
-from app.engine.src.training.policy.view_roles import sample_view_roles
+from src.training.policy.view_roles import sample_view_roles
 
 
 @dataclass

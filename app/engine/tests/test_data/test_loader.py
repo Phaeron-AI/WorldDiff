@@ -7,7 +7,7 @@ import torch
 
 from src.data.latent_cache import CacheConfig
 from src.data.loader import SceneLatentData, collate_scenes, make_loader
-from app.engine.src.geometry.rays import RayEncoder
+from src.geometry.rays import RayEncoder
 
 
 def _cfg(**over) -> CacheConfig:

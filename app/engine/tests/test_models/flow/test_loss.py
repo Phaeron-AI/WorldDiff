@@ -1,6 +1,6 @@
 import torch
 
-from src.models.flow.loss import (
+from src.models.flow.forward.loss import (
   _masked_flow_matching_loss_per_sample,
   masked_flow_matching_loss,
 )

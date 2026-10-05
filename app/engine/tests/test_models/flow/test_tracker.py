@@ -1,4 +1,4 @@
-"""Regression tests for src.training.tracker (P3.3b, derivations 53/54/70).
+"""Regression tests for src.training.state.tracker (P3.3b, derivations 53/54/70).
 
 Each test pins a behaviour that was wrong in an earlier revision:
   - windows must reset on log (means and rates were cumulative)
@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from app.engine.src.training.state.tracker import Tracker
+from src.training.state.tracker import Tracker
 
 # The derivation-70 worked example: five steps, unequal example counts.
 #   sum 184 / count 160 = 1.15   (mean-of-means would be 1.4)

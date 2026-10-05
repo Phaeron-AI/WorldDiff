@@ -4,8 +4,8 @@ import torch
 from torch import Tensor
 
 from src.models.dit.model import MultiViewDiT
-from app.engine.src.training.policy.ema import EMA
-from app.engine.src.training.policy.lr_schedule import learning_rate
+from src.training.policy.ema import EMA
+from src.training.policy.lr_schedule import learning_rate
 from src.training.step import train_step
 
 

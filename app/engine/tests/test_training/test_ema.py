@@ -5,7 +5,7 @@ import torch
 from torch import nn
 
 
-from app.engine.src.training.policy.ema import EMA
+from src.training.policy.ema import EMA
 
 
 def make_model():

@@ -18,8 +18,8 @@ import argparse
 import torch
 
 from src.models.dit.model import MultiViewDiT
-from app.engine.scripts.overfit import train_overfit
-from app.engine.scripts.reconstruct import reconstruct
+from scripts.overfit import train_overfit
+from scripts.reconstruct import reconstruct
 
 
 def build_fixed_scene(

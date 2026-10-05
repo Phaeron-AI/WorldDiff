@@ -7,7 +7,7 @@ from torch import Tensor
 
 # Local Import(s)
 from src.models.dit.model import MultiViewDiT
-from src.models.flow.sampler import sample
+from src.models.flow.reverse.sampler import sample
 
 
 @torch.no_grad()

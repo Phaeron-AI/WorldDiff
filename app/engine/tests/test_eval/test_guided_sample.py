@@ -5,8 +5,8 @@ from torch import nn
 
 from src.eval.validate import guided_sample
 from src.models.flow import sample
-from src.models.flow.guidance import cfg_velocity
-from src.models.flow.sampler import init_target_noise
+from src.models.flow.reverse.guidance import cfg_velocity
+from src.models.flow.reverse.sampler import init_target_noise
 
 
 NUM_VIEWS = 4

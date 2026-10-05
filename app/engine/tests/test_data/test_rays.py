@@ -4,7 +4,7 @@ from __future__ import annotations
 import torch
 
 # Local Import(s)
-from app.engine.src.geometry.rays import RayEncoder
+from src.geometry.rays import RayEncoder
 
 
 def make_intrinsics(n: int, height: int, width: int, *, device: str = "cpu", dtype: torch.dtype = torch.float32) -> torch.Tensor:
