@@ -92,7 +92,15 @@ def test_validate_routine_zero_init_latent_mse() -> None:
     num_input=NUM_INPUT,
   )
 
-  assert set(metrics) == {"val/latent_mse", "val/mse", "val/psnr"}
+  assert set(metrics) == {
+    "val/latent_mse",
+    "val/mse",
+    "val/psnr",
+    "val/R",
+    "val/d_truth",
+    "val/v_model",
+    "val/v_truth",
+  }
   assert all(isinstance(value, float) for value in metrics.values())
 
   # E[(eps - z0)^2] = Var(eps) + Var(z0) = 2, at 2.4 sigma for this sample size.
