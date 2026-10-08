@@ -4,3 +4,12 @@
 # Pycache Runs
 __pycache__/
 .pytest_cache/
+
+# Cache
+cache/
+
+# PyTorch Files
+*.pt
+
+# Output Files
+outputs/
