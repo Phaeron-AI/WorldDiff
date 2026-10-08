@@ -45,7 +45,7 @@ def _substream(
   base: int,
   tag: str,
 ) -> int:
-  if tag not in {"u", "c"}:
+  if tag not in {"u", "c", "c2"}:
     raise ValueError(
       f"unknown validation RNG substream: {tag!r}"
     )
@@ -293,6 +293,19 @@ def validate_routine(
     dtype=torch.float64,
   )
 
+  # Second conditional draw, for the dispersion estimate.
+  pair_sse = torch.zeros(
+    (),
+    device=device,
+    dtype=torch.float64,
+  )
+
+  draw2_sse = torch.zeros(
+    (),
+    device=device,
+    dtype=torch.float64,
+  )
+
   try:
     with torch.inference_mode():
       for scene in val_set:
@@ -428,6 +441,51 @@ def validate_routine(
         pixel_sse += scene_sse
         pixel_count += scene_count
 
+        # ------------------------------------------------------------
+        # Dispersion
+        # ------------------------------------------------------------
+        #
+        # A second independent draw on the same conditioning problem.
+        # It uses its own RNG substream, so the "c" draw above is
+        # untouched and val/latent_mse stays comparable with every run
+        # recorded before this metric existed.
+        #
+        g_disp = _generator(
+          _substream(base, "c2"),
+          z0.device,
+        )
+
+        draw2 = _conditional_sample(
+          model,
+          z0,
+          rays,
+          cond_mask,
+          num_steps=K_ROUTINE,
+          rng=g_disp,
+        )
+
+        if not torch.isfinite(
+          draw2
+        ).all():
+          raise FloatingPointError(
+            f"non-finite second validation draw "
+            f"in scene {scene_id!r}"
+          )
+
+        draw2_target = draw2[target_mask]
+
+        pair_sse += (
+          pred_target - draw2_target
+        ).square().sum(
+          dtype=torch.float64,
+        )
+
+        draw2_sse += (
+          draw2_target - ref_target
+        ).square().sum(
+          dtype=torch.float64,
+        )
+
     if (
       latent_count.item() == 0
       or pixel_count.item() == 0
@@ -454,6 +512,30 @@ def validate_routine(
       int(pixel_count.item()),
     )
 
+    # Symmetric sample-to-truth distance. Using both draws keeps the
+    # ratio from being biased by whichever draw was scored first, and
+    # costs nothing: draw2_sse is already accumulated.
+    d_truth = (
+      latent_sse + draw2_sse
+    ) / (2.0 * latent_count)
+
+    d_sample = pair_sse / latent_count
+
+    # R = 2*V_model / (V_model + V_truth)
+    #
+    #   0 -> collapsed to the conditional mean
+    #   1 -> model spread matches the data's
+    #
+    # R is NOT capped at 1: it tends to 2 as the targets become
+    # deterministic, so R > 1 means over-dispersion.
+    #
+    # A bit-exact model would make this 0/0 and yield nan, which the
+    # gate rejects. That cannot happen on a stochastic task.
+    r = d_sample / d_truth
+
+    v_model = d_sample / 2.0
+    v_truth = d_truth - v_model
+
     return {
       "val/latent_mse": float(
         latent_mse.cpu()
@@ -462,6 +544,18 @@ def validate_routine(
         mse.cpu()
       ),
       "val/psnr": psnr,
+      "val/R": float(
+        r.cpu()
+      ),
+      "val/d_truth": float(
+        d_truth.cpu()
+      ),
+      "val/v_model": float(
+        v_model.cpu()
+      ),
+      "val/v_truth": float(
+        v_truth.cpu()
+      ),
     }
 
   finally:
