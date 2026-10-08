@@ -144,7 +144,7 @@ class TrainSummary:
 
 def numerical_flags() -> dict[str, Any]:
   flags: dict[str, Any] = {
-    "torch_version": torch.__version__,
+    "torch_version": str(torch.__version__),
     "cuda_version": torch.version.cuda,
     "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
     "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
